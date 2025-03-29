@@ -8,29 +8,29 @@ export class AlbumController {
   ctx: Context;
 
   @Get('/detail')
-  async getAlbumDetail(@Query('id') id: number) {
+  async getAlbumDetail(@Query('id') id: number, @Query('limit') limit: number = 1000) {
     // 获取专辑详情
     const result = await album({
       id,
       ...this.ctx.base_parms
     });
-    
+
     const response = result.body as any;
     const albumInfo = response.album;
     let songs = response.songs;
-    
-    // 获取所有歌曲id
-    const ids = songs.map((song: any) => song.id).join(',');
-    
+
+    // 获取歌曲id
+    const ids = songs.slice(0, limit).map((song: any) => song.id).join(',');
+
     // 获取歌曲详情（包含权限信息）
     const songsDetail = await song_detail({
       ids,
       ...this.ctx.base_parms
     });
-    
+
     songs = songsDetail.body.songs;
     const privileges = songsDetail.body.privileges;
-    
+
     // 构建返回数据
     const data: Playlist = {
       id: albumInfo.id,
@@ -59,7 +59,7 @@ export class AlbumController {
       t: like ? 1 : 0,
       ...this.ctx.base_parms
     });
-    
+
     return {
       id,
       like,
@@ -74,13 +74,13 @@ export class AlbumController {
       offset,
       ...this.ctx.base_parms
     });
-    
+
     const response = result.body as any;
     const albums = response.data;
-    
+
     // 使用工具函数转换专辑数据
     const data = transformAlbums(albums);
-    
+
     return data;
   }
 }
