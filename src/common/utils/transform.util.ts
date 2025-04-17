@@ -2,22 +2,24 @@
  * 网易云音乐歌曲信息转换
  */
 export const transformSong = (song: any): Song => {
+  const artists = song.ar || song.artists;
+  const album = song.al || song.album;
   return {
     id: song.id,
     name: song.name,
-    artists: song.ar.map((ar: any) => {
+    artists: artists.map((ar: any) => {
       return {
         id: ar.id,
         name: ar.name
       } as Artist
     }),
     album: {
-      id: song.al.id,
-      name: song.al.name,
-      cover: song.al.picUrl
+      id: album.id,
+      name: album.name,
+      cover: album.picUrl
     } as Album,
     tns: song.tns,
-    duration: song.dt,
+    duration: song.dt || song.duration,
     // 如果有privilege字段也进行转换
     privilege: song.privilege ? transformPrivilege(song.privilege) : undefined
   } as Song
