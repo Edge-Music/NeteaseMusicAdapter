@@ -1,5 +1,5 @@
 import { Context, Controller, Get, Inject, Query } from '@midwayjs/core';
-import { personalized, user_playlist, toplist, playlist_detail_dynamic, recommend_songs, personal_fm } from 'NeteaseCloudMusicApi'
+import { personalized, user_playlist, toplist, playlist_detail_dynamic, recommend_songs, personal_fm, user_cloud } from 'NeteaseCloudMusicApi'
 import { transformSongs, transformSongsAndPrivilege } from '../common/utils/transform.util';
 import { playlist_track_all } from '../common/utils/api.util';
 
@@ -24,7 +24,7 @@ export class PlaylistController {
       description: "根据你的音乐口味生成，每天更新",
       creator: {
         id: uid,
-        name: "网易云音乐",
+        name: "云享社",
         avatar: ""
       }
     }
@@ -36,7 +36,19 @@ export class PlaylistController {
       description: "一天逛五次私人FM，每次都有新感觉",
       creator: {
         id: uid,
-        name: "网易云音乐",
+        name: "云享社",
+        avatar: ""
+      }
+    }
+    const cloud_disk: Playlist = {
+      id: "key_cloud_disk",
+      name: "音乐云盘",
+      cover: "https://ui-avatars.com/api/?bold=true&name=Cloud&size=300",
+      type: "normal",
+      description: "你的私人音乐云盘",
+      creator: {
+        id: uid,
+        name: "云享社",
         avatar: ""
       }
     }
@@ -55,7 +67,7 @@ export class PlaylistController {
         description: item.description
       }
     })
-    return [daily_songs, personal_fm, ...data];
+    return [daily_songs, personal_fm, cloud_disk, ...data];
   }
 
   @Get('/recommend')
@@ -98,7 +110,7 @@ export class PlaylistController {
   @Get('/detail')
   async getPlaylistDetail(@Query('id') id: id) {
     const limit = 2000;
-    const keywards: id[] = ['key_daily_songs', 'key_personal_fm', 'daily_songs']; // 保留关键字
+    const keywards: id[] = ['key_daily_songs', 'key_personal_fm', 'daily_songs', 'key_cloud_disk']; // 保留关键字
     if (keywards.includes(id)) {
       if (id === 'key_daily_songs' || id === 'daily_songs') {
         const result = await recommend_songs({
@@ -130,6 +142,30 @@ export class PlaylistController {
           id: 'key_personal_fm',
           songs: transformSongs(songs),
           meta: {}
+        } as Playlist
+      } else if (id === 'key_cloud_disk') {
+        const result = await user_cloud({
+          limit,
+          ...this.ctx.base_parms
+        });
+        const cloud_songs = (result.body.data as any[]).map(item => {
+          return {
+            ...item.simpleSong,
+            ar: item.simpleSong.ar || [{ id: 0, name: item.artist || "未知艺术家" }],
+            al: {
+              id: 0,
+              name: item.album || "未知专辑",
+              picUrl: item.simpleSong.al?.picUrl || "http://p2.music.126.net/0ju8ET1ApZSXfWacc4w49w==/109951169484091680.jpg"
+            }
+          };
+        });
+        return {
+          id: 'key_cloud_disk',
+          songs: transformSongs(cloud_songs),
+          meta: {
+            size: result.body.size,
+            maxSize: result.body.maxSize
+          }
         } as Playlist
       }
     } else {
