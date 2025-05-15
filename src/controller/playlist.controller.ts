@@ -1,8 +1,7 @@
 import { Context, Controller, Get, Inject, Query } from '@midwayjs/core';
-import { personalized, user_playlist, toplist, playlist_detail_dynamic, recommend_songs, personal_fm, user_cloud } from 'NeteaseCloudMusicApi'
+import { personalized, user_playlist, toplist, playlist_detail_dynamic, recommend_songs, personal_fm, user_cloud, playmode_intelligence_list, likelist } from 'NeteaseCloudMusicApi'
 import { transformSongs, transformSongsAndPrivilege } from '../common/utils/transform.util';
 import { playlist_track_all } from '../common/utils/api.util';
-
 @Controller('/playlist')
 export class PlaylistController {
   @Inject()
@@ -67,7 +66,26 @@ export class PlaylistController {
         description: item.description
       }
     })
-    return [daily_songs, personal_fm, cloud_disk, ...data];
+    return data.length > 0
+      ? [
+        daily_songs,
+        personal_fm,
+        cloud_disk,
+        {
+          id: `key_heartbeat_${data[0].id}_${uid}`,
+          name: "心动歌单",
+          cover: "https://ui-avatars.com/api/?bold=true&name=Heart&size=300",
+          type: "normal",
+          description: "记录你的心动时刻",
+          creator: {
+            id: uid,
+            name: "云享社",
+            avatar: ""
+          }
+        },
+        ...data
+      ]
+      : [daily_songs, personal_fm, cloud_disk, ...data];
   }
 
   @Get('/recommend')
@@ -110,8 +128,7 @@ export class PlaylistController {
   @Get('/detail')
   async getPlaylistDetail(@Query('id') id: id) {
     const limit = 2000;
-    const keywards: id[] = ['key_daily_songs', 'key_personal_fm', 'daily_songs', 'key_cloud_disk']; // 保留关键字
-    if (keywards.includes(id)) {
+    if (id.toString().startsWith('key_')) {
       if (id === 'key_daily_songs' || id === 'daily_songs') {
         const result = await recommend_songs({
           ...this.ctx.base_parms
@@ -166,6 +183,29 @@ export class PlaylistController {
             size: result.body.size,
             maxSize: result.body.maxSize
           }
+        } as Playlist
+      } else if (id.toString().startsWith('key_heartbeat_')) {
+        const pid_uid = id.toString().slice(14);
+        const pid = pid_uid.split('_')[0];
+        const uid = pid_uid.split('_')[1];
+        const likelist_result = await likelist({
+          uid,
+          ...this.ctx.base_parms
+        });
+        const sid = likelist_result.body.ids[0];
+        console.log(sid);
+        const intelligence_list_result = await playmode_intelligence_list({
+          id: sid,
+          sid: Number(sid),
+          pid: Number(pid),
+          count: 100,
+          ...this.ctx.base_parms
+        });
+        const data = (intelligence_list_result.body.data as any[])?.map(item => item.songInfo).filter(Boolean) ?? [];
+        return {
+          id: id,
+          songs: transformSongs(data),
+          meta: {}
         } as Playlist
       }
     } else {

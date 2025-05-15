@@ -2,17 +2,17 @@
  * 网易云音乐歌曲信息转换
  */
 export const transformSong = (song: any): Song => {
-  const artists = song.ar || song.artists;
-  const album = song.al || song.album;
+  const artists = song?.ar || song?.artists;
+  const album = song?.al || song?.album;
   return {
     id: song.id,
     name: song.name,
-    artists: artists.map((ar: any) => {
+    artists: artists?.map((ar: any) => {
       return {
         id: ar.id,
         name: ar.name
       } as Artist
-    }),
+    }) || [],
     album: {
       id: album.id,
       name: album.name,
