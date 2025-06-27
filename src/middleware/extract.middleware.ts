@@ -41,6 +41,9 @@ export class ExtractMiddleware implements IMiddleware<Context, NextFunction> {
           ctx.base_parms.proxy = proxy;
         }
       }
+
+      // Cookie 加上os=pc
+      ctx.base_parms.cookie = `${ctx.base_parms.cookie}; os=pc`;
       await next();
     };
   }
