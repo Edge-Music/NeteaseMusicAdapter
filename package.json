@@ -10,7 +10,7 @@
     "@midwayjs/koa": "^3.12.0",
     "@midwayjs/logger": "^3.1.0",
     "@midwayjs/validate": "^3.12.0",
-    "NeteaseCloudMusicApi": "git+https://gitlab.com/Okysu/neteasecloudmusicapi.git"
+    "NeteaseCloudMusicApi": "git+https://github.com/neteasecloudmusicapienhanced/api-enhanced.git"
   },
   "devDependencies": {
     "@midwayjs/mock": "^3.12.0",
