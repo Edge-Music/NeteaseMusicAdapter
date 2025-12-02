@@ -1,5 +1,5 @@
 import { Context, Controller, Get, Inject, Query } from '@midwayjs/core';
-import { personalized, user_playlist, toplist, playlist_detail_dynamic, recommend_songs, personal_fm, user_cloud, playmode_intelligence_list, likelist } from 'NeteaseCloudMusicApi'
+import { recommend_resource,personalized, user_playlist, toplist, playlist_detail_dynamic, recommend_songs, personal_fm, user_cloud, playmode_intelligence_list, likelist } from 'NeteaseCloudMusicApi'
 import { transformSongs, transformSongsAndPrivilege } from '../common/utils/transform.util';
 import { playlist_track_all } from '../common/utils/api.util';
 @Controller('/playlist')
@@ -17,7 +17,7 @@ export class PlaylistController {
     });
     const daily_songs: Playlist = {
       id: "key_daily_songs",
-      name: "今日日推推荐",
+      name: "今日推荐",
       cover: `https://ui-avatars.com/api/?bold=true&name=${new Date().getDate()}&size=300`,
       type: "normal",
       description: "根据你的音乐口味生成，每天更新",
@@ -90,21 +90,59 @@ export class PlaylistController {
 
   @Get('/recommend')
   async getRecommendPlaylist(@Query('limit') limit: number = 10) {
-    const result = await personalized({
-      limit,
-      ...this.ctx.base_parms
-    });
-    const data: Playlist[] = (result.body.result as any[]).map((item) => {
-      return {
-        id: item.id,
-        name: item.name,
-        cover: item.picUrl,
-        size: item.trackCount,
-        type: "normal",
-        description: item.description,
+    // 使用 Promise.allSettled 并行请求两个 API
+    const results = await Promise.allSettled([
+      recommend_resource({
+        ...this.ctx.base_parms
+      }),
+      personalized({
+        limit,
+        ...this.ctx.base_parms
+      })
+    ]);
+
+    // 处理第一个请求的结果 (recommend_resource)
+    let data: Playlist[] = [];
+    if (results[0].status === 'fulfilled') {
+      data = (results[0].value.body.recommend as any[]).map((item) => {
+        return {
+          id: item.id,
+          name: item.name,
+          cover: item.picUrl,
+          size: item.trackCount,
+          type: "normal",
+          description: item.description,
+        }
+      });
+    }
+
+    // 处理第二个请求的结果 (personalized)
+    let data2: Playlist[] = [];
+    if (results[1].status === 'fulfilled') {
+      data2 = (results[1].value.body.result as any[]).map((item) => {
+        return {
+          id: item.id,
+          name: item.name,
+          cover: item.picUrl,
+          size: item.trackCount,
+          type: "normal",
+          description: item.description,
+        }
+      });
+    }
+
+    // 合并两个数组并根据 id 去重
+    const allPlaylists = [...data, ...data2];
+    const uniquePlaylists = allPlaylists.reduce((acc: Playlist[], current: Playlist) => {
+      const exists = acc.find(item => item.id === current.id);
+      if (!exists) {
+        acc.push(current);
       }
-    })
-    return data;
+      return acc;
+    }, []);
+
+    // 根据 limit 参数截取结果
+    return uniquePlaylists.slice(0, limit);
   }
 
   @Get('/toplist')
@@ -126,8 +164,8 @@ export class PlaylistController {
   }
 
   @Get('/detail')
-  async getPlaylistDetail(@Query('id') id: id) {
-    const limit = 2000;
+  async getPlaylistDetail(@Query('id') id: id, @Query('limit') limit: number = 2000) {
+    // const limit = 2000;
     if (id.toString().startsWith('key_')) {
       if (id === 'key_daily_songs' || id === 'daily_songs') {
         const result = await recommend_songs({
