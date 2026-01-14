@@ -1,5 +1,5 @@
 import { Context, Controller, Get, Inject, Query } from '@midwayjs/core';
-import { recommend_resource,personalized, user_playlist, toplist, playlist_detail_dynamic, recommend_songs, personal_fm, user_cloud, playmode_intelligence_list, likelist } from 'NeteaseCloudMusicApi'
+import { recommend_resource, personalized, user_playlist, toplist, playlist_detail_dynamic, recommend_songs, personal_fm, user_cloud, playmode_intelligence_list, likelist } from 'NeteaseCloudMusicApi'
 import { transformSongs, transformSongsAndPrivilege } from '../common/utils/transform.util';
 import { playlist_track_all } from '../common/utils/api.util';
 @Controller('/playlist')
@@ -141,8 +141,28 @@ export class PlaylistController {
       return acc;
     }, []);
 
-    // 根据 limit 参数截取结果
-    return uniquePlaylists.slice(0, limit);
+    // 添加自定义歌单
+    const customPlaylist: Playlist = {
+      id: "key_notice_help",
+      name: "助力云享社",
+      cover: "http://assets.yby.zone/help.jpg",
+      description: "帮助云享社下载三款鸿蒙应用滑动几秒即可完成帮助，无需付出任何金钱。",
+      size: 5,
+      type: "normal",
+      creator: {
+        id: "notice_help",
+        name: "云享社",
+        avatar: "http://assets.yby.zone/help.jpg"
+      }
+    };
+
+    const result = uniquePlaylists.slice(0, limit);
+
+    if (this.ctx.base_parms.nopromo || this.ctx.base_parms.client === undefined) {
+      return result;
+    }
+
+    return [customPlaylist, ...result];
   }
 
   @Get('/toplist')
@@ -231,7 +251,6 @@ export class PlaylistController {
           ...this.ctx.base_parms
         });
         const sid = likelist_result.body.ids[0];
-        console.log(sid);
         const intelligence_list_result = await playmode_intelligence_list({
           id: sid,
           sid: Number(sid),
@@ -243,6 +262,58 @@ export class PlaylistController {
         return {
           id: id,
           songs: transformSongs(data),
+          meta: {}
+        } as Playlist
+      } else if (id === 'key_notice_help') {
+        return {
+          id: 'key_notice_help',
+          name: "助力云享社",
+          cover: "http://assets.yby.zone/help.jpg",
+          description: "帮助云享社下载三款鸿蒙应用滑动几秒即可完成帮助，无需付出任何金钱。",
+          size: 5,
+          type: "normal",
+          songs: [
+            {
+              id: 'promo_notice_1',
+              name: '助力月活激励，鞭策云享社3.0',
+              artists: [{ id: 'notice', name: '云享社' }],
+              album: { id: 'notice', name: '助力云享社', cover: 'http://assets.yby.zone/help.jpg' },
+              duration: 0,
+              privilege: { playable: true, maxBitrate: 320000, bitrates: [320000] }
+            },
+            {
+              id: 'promo_notice_2',
+              name: '点击下方应用跳转',
+              artists: [{ id: 'notice', name: '云享社' }],
+              album: { id: 'notice', name: '助力云享社', cover: 'http://assets.yby.zone/help.jpg' },
+              duration: 0,
+              privilege: { playable: true, maxBitrate: 320000, bitrates: [320000] }
+            },
+            {
+              id: 'promo_color',
+              name: '浣色',
+              artists: [{ id: 'notice', name: '云享社' }],
+              album: { id: 'notice', name: '助力云享社', cover: 'https://appimg-drcn.dbankcdn.com/application/icon144/phone/a0885bf210eb4143ba0901d23f0fe4e9.webp' },
+              duration: 0,
+              privilege: { playable: true, maxBitrate: 320000, bitrates: [320000] }
+            },
+            {
+              id: 'promo_mind',
+              name: '信念进化论',
+              artists: [{ id: 'notice', name: '云享社' }],
+              album: { id: 'notice', name: '助力云享社', cover: 'https://appimg-drcn.dbankcdn.com/application/icon144/phone/b720b0186132495b86014c9fb17b8aae.webp' },
+              duration: 0,
+              privilege: { playable: true, maxBitrate: 320000, bitrates: [320000] }
+            },
+            {
+              id: 'promo_mqtt',
+              name: 'Spark MQTT',
+              artists: [{ id: 'notice', name: '云享社' }],
+              album: { id: 'notice', name: '助力云享社', cover: 'https://appimg-drcn.dbankcdn.com/application/icon144/phone/bee1781f9a7e41dc8e29d12ce52524c1.webp' },
+              duration: 0,
+              privilege: { playable: true, maxBitrate: 320000, bitrates: [320000] }
+            }
+          ] as unknown as Song[],
           meta: {}
         } as Playlist
       }

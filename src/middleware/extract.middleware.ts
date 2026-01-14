@@ -13,7 +13,14 @@ export class ExtractMiddleware implements IMiddleware<Context, NextFunction> {
       const method = ctx.method;
       ctx.base_parms = {
         timestamp: Date.now(),
+        nopromo: Number(ctx.request.query.nopromo),
+        client: undefined
       };
+      // 从请求头获取client
+      const client = ctx.request.headers['client'] || ctx.request.headers['Client'];
+      if (isString(client)) {
+        ctx.base_parms.client = client;
+      }
       // 从请求头获取token
       let token = ctx.request.headers['token'] || ctx.request.headers['Token'];
       if (isString(token)) {

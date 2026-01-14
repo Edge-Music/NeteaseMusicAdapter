@@ -2,7 +2,7 @@ import '@midwayjs/core';
 import { RequestBaseConfig } from 'NeteaseCloudMusicApi'
 declare module '@midwayjs/core' {
   interface Context {
-    base_parms: RequestBaseConfig & { timestamp?: number };
+    base_parms: RequestBaseConfig & { timestamp?: number, nopromo?: number, client?: string };
   }
 }
 
