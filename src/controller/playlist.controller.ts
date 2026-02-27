@@ -18,7 +18,7 @@ export class PlaylistController {
     const daily_songs: Playlist = {
       id: "key_daily_songs",
       name: "今日推荐",
-      cover: `https://ui-avatars.com/api/?bold=true&name=${new Date().getDate()}&size=300`,
+      cover: `cover://0`,
       type: "normal",
       description: "根据你的音乐口味生成，每天更新",
       creator: {
@@ -30,7 +30,7 @@ export class PlaylistController {
     const personal_fm: Playlist = {
       id: "key_personal_fm",
       name: "私人FM",
-      cover: `https://ui-avatars.com/api/?bold=true&name=FM&size=300`,
+      cover: "cover://0",
       type: "normal",
       description: "一天逛五次私人FM，每次都有新感觉",
       creator: {
@@ -42,7 +42,7 @@ export class PlaylistController {
     const cloud_disk: Playlist = {
       id: "key_cloud_disk",
       name: "音乐云盘",
-      cover: "https://ui-avatars.com/api/?bold=true&name=Cloud&size=300",
+      cover: "cover://0",
       type: "normal",
       description: "你的私人音乐云盘",
       creator: {
@@ -74,7 +74,7 @@ export class PlaylistController {
         {
           id: `key_heartbeat_${data[0].id}_${uid}`,
           name: "心动歌单",
-          cover: "https://ui-avatars.com/api/?bold=true&name=Heart&size=300", // 心动歌单的封面使用第一首歌曲的封面
+          cover: "cover://0", // 心动歌单的封面使用第一首歌曲的封面
           type: "normal",
           description: "记录你的心动时刻",
           creator: {
