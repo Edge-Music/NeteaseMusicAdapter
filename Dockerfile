@@ -1,6 +1,9 @@
 FROM node:18-alpine
 WORKDIR /app
 
+# 安装 git
+RUN apk add --no-cache git
+
 # 安装依赖
 COPY package*.json ./
 RUN npm install
