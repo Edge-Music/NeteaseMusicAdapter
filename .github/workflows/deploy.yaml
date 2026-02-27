@@ -31,7 +31,3 @@ jobs:
           tags: |
             ghcr.io/edge-music/omsp-adapter-netease:latest
             ghcr.io/edge-music/omsp-adapter-netease:${{ github.sha }}
-
-      - name: Trigger Dokploy Deploy
-        run: |
-          curl -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
