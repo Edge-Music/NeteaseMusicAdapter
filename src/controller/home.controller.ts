@@ -5,7 +5,7 @@ export class HomeController {
   @Get('/')
   async home() {
     return {
-      name: 'universal-music-api-for-seamusic',
+      name: 'omsp-n1',
       version: '1.0.0'
     }
   }
