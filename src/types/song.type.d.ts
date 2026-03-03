@@ -1,5 +1,7 @@
 type Bitrate = number;
 
+type BitrateLevel = 'standard' | 'higher' | 'exhigh' | 'lossless' | 'hires' | 'vivd' | string;
+
 interface Privilege {
   // 是否可播放
   playable: boolean;

@@ -1,6 +1,6 @@
 import { Context, Controller, Get, Inject, Put, Query } from '@midwayjs/core';
 import { transformPrivilege } from '../common/utils/transform.util';
-import { top_song, song_url, lyric, likelist, like as likeSong, song_url_v1, SoundQualityType, TopSongType } from 'NeteaseCloudMusicApi'
+import { top_song, lyric, likelist, like as likeSong, song_url_v1, SoundQualityType, TopSongType } from 'NeteaseCloudMusicApi'
 
 @Controller('/song')
 export class SongController {
@@ -38,45 +38,20 @@ export class SongController {
   }
 
   @Get('/detail')
-  async getSongDetail(@Query('id') id: id, @Query('uid') uid: id, @Query('br') br: Bitrate = 320000) {
-    const promoMap = {
-      'promo_color': 'browser:https://appgallery.huawei.com/app/detail?id=zone.yby.color',
-      'promo_mind': 'browser:https://appgallery.huawei.com/app/detail?id=zone.yby.mind',
-      'promo_mqtt': 'browser:https://appgallery.huawei.com/app/detail?id=zone.yby.mqtt',
-      'promo_notice_1': 'text:谢谢支持',
-      'promo_notice_2': 'text:云享社承诺无广告，若您觉得这个歌单碍眼可以在数据源地址后面加上?nopromo=1进行取消。',
-    };
-
-    if (promoMap[id as string]) {
-      return {
-        id,
-        meta: {
-          url: promoMap[id as string],
-          md5: '',
-          size: 0,
-          bitrate: 320000,
-          isFavorite: false,
-          lyric: {
-            normal: '点击跳转应用商店支持',
-            translation: '',
-            transliteration: ''
-          }
-        }
-      } as Song;
-    }
-
-    // 根据 br 参数决定使用哪个接口
-    const urlPromise = br === 999900
-      ? song_url_v1({ id, level: SoundQualityType.jyeffect, ...this.ctx.base_parms })
-      : song_url({ id, br, ...this.ctx.base_parms });
+  async getSongDetail(
+    @Query('id') id: id,
+    @Query('br') br: Bitrate | BitrateLevel = 320000
+  ) {
+    // 参数标准化：统一转换为 BitrateLevel
+    const level = this.normalizeToLevel(br);
 
     const [url_result, lrc, like_ids] = await Promise.all([
-      urlPromise,
+      song_url_v1({ id, level, ...this.ctx.base_parms }),
       lyric({ id, ...this.ctx.base_parms }),
-      likelist({ uid, ...this.ctx.base_parms })
+      likelist({ uid: -1, ...this.ctx.base_parms })
     ]);
-    const lry_result = lrc.body as any;
 
+    const lry_result = lrc.body as any;
     const data: Song = {
       id,
       meta: {
@@ -94,6 +69,24 @@ export class SongController {
     }
     return data;
   }
+
+  private normalizeToLevel(br: Bitrate | BitrateLevel): SoundQualityType {
+    if (typeof br === 'string') {
+      if (br === 'vivd') return SoundQualityType.jyeffect;
+      return br as SoundQualityType;
+    }
+
+    const bitrateMap: Record<number, SoundQualityType> = {
+      128000: SoundQualityType.standard,
+      192000: 'higher' as SoundQualityType,
+      320000: SoundQualityType.exhigh,
+      350000: SoundQualityType.jymaster,
+      999000: SoundQualityType.jyeffect,
+    };
+
+    return bitrateMap[br] ?? SoundQualityType.standard;
+  }
+
 
   @Put('/like')
   async likeSong(@Query('id') id: id, @Query('like') like: boolean = true) {
