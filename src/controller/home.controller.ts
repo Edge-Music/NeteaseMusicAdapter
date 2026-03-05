@@ -5,7 +5,7 @@ export class HomeController {
   @Get('/')
   async home() {
     return {
-      name: 'omsp-n1',
+      name: 'omsp-2026-0305',
       version: '1.0.0'
     }
   }

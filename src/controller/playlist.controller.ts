@@ -1,5 +1,5 @@
 import { Context, Controller, Del, Get, Inject, Post, Query } from '@midwayjs/core';
-import { playlist_tracks, playlist_create, recommend_resource, personalized, user_playlist, toplist, playlist_detail_dynamic, recommend_songs, personal_fm, user_cloud, playmode_intelligence_list, likelist } from 'NeteaseCloudMusicApi'
+import { playlist_subscribe, playlist_tracks, playlist_create, recommend_resource, personalized, user_playlist, toplist, playlist_detail_dynamic, recommend_songs, personal_fm, user_cloud, playmode_intelligence_list, likelist } from 'NeteaseCloudMusicApi'
 import { transformSongs, transformSongsAndPrivilege } from '../common/utils/transform.util';
 import { playlist_track_all } from '../common/utils/api.util';
 @Controller('/playlist')
@@ -309,6 +309,24 @@ export class PlaylistController {
       op: 'del',
       pid,
       tracks: sids.join(','),
+      ...this.ctx.base_parms
+    });
+  }
+
+  @Post('/subscribe')
+  async subscribePlaylist(@Query('id') id: id) {
+    await playlist_subscribe({
+      id,
+      t: 1,
+      ...this.ctx.base_parms
+    });
+  }
+
+  @Post('/unsubscribe')
+  async unsubscribePlaylist(@Query('id') id: id) {
+    await playlist_subscribe({
+      id,
+      t: 0,
       ...this.ctx.base_parms
     });
   }
