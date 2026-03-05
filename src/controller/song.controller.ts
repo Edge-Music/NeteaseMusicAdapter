@@ -102,4 +102,28 @@ export class SongController {
       playlist: data.playlistId
     }
   }
+
+  @Get('/lyric')
+  async getLyric(@Query('id') id: id) {
+    const result = await lyric({ id, ...this.ctx.base_parms });
+    const data = result.body as any;
+    return {
+      id,
+      lyric: {
+        normal: data.lrc?.lyric ?? '',
+        translation: data.tlyric?.lyric ?? '',
+        transliteration: data.romalrc?.lyric ?? ''
+      }
+    }
+  }
+
+  @Get('/like')
+  async getLikeStatus(@Query('id') id: id) {
+    const result = await likelist({ uid: -1, ...this.ctx.base_parms });
+    const data = result.body as any;
+    return {
+      id,
+      isLiked: (data.ids as any[]).includes(Number(id))
+    }
+  }
 }
