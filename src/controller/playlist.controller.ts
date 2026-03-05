@@ -1,5 +1,5 @@
-import { Context, Controller, Get, Inject, Query } from '@midwayjs/core';
-import { recommend_resource, personalized, user_playlist, toplist, playlist_detail_dynamic, recommend_songs, personal_fm, user_cloud, playmode_intelligence_list, likelist } from 'NeteaseCloudMusicApi'
+import { Context, Controller, Del, Get, Inject, Post, Query } from '@midwayjs/core';
+import { playlist_tracks, playlist_create, recommend_resource, personalized, user_playlist, toplist, playlist_detail_dynamic, recommend_songs, personal_fm, user_cloud, playmode_intelligence_list, likelist } from 'NeteaseCloudMusicApi'
 import { transformSongs, transformSongsAndPrivilege } from '../common/utils/transform.util';
 import { playlist_track_all } from '../common/utils/api.util';
 @Controller('/playlist')
@@ -271,5 +271,45 @@ export class PlaylistController {
         }
       } as Playlist
     }
+  }
+
+  @Post('/create')
+  async createPlaylist(@Query('name') name: string): Promise<Playlist> {
+    const result = await playlist_create({
+      name,
+      privacy: 0,
+      ...this.ctx.base_parms
+    });
+
+    const raw = result.body as any;
+    const p = raw.playlist;
+
+    return {
+      id: p.id,
+      name: p.name,
+      cover: p.coverImgUrl,
+    };
+  }
+
+  @Post('/songs')
+  async addSongsToPlaylist(@Query('pid') pid: id, @Query('sids') sidsStr: string) {
+    const sids = sidsStr.split(',').filter(item => item.length > 0);
+    await playlist_tracks({
+      op: 'add',
+      pid,
+      tracks: sids.join(','),
+      ...this.ctx.base_parms
+    });
+  }
+
+  @Del('/songs')
+  async removeSongsFromPlaylist(@Query('pid') pid: id, @Query('sids') sidsStr: string) {
+    const sids = sidsStr.split(',').filter(item => item.length > 0);
+    await playlist_tracks({
+      op: 'del',
+      pid,
+      tracks: sids.join(','),
+      ...this.ctx.base_parms
+    });
   }
 }
