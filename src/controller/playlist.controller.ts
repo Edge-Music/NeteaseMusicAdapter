@@ -322,7 +322,7 @@ export class PlaylistController {
     });
   }
 
-  @Post('/unsubscribe')
+  @Del('/subscribe')
   async unsubscribePlaylist(@Query('id') id: id) {
     await playlist_subscribe({
       id,
