@@ -1,6 +1,7 @@
 import { Context, Controller, Get, Inject, Put, Query } from '@midwayjs/core';
+import { convertNetEaseYrcToEnhancedLrc, normalizeNetEaseLyric } from '../common/utils/lyric.util';
 import { transformPrivilege } from '../common/utils/transform.util';
-import { top_song, lyric, likelist, like as likeSong, song_url_v1, SoundQualityType, TopSongType } from 'NeteaseCloudMusicApi'
+import { top_song, lyric_new, likelist, like as likeSong, song_url_v1, SoundQualityType, TopSongType } from 'NeteaseCloudMusicApi'
 
 @Controller('/song')
 export class SongController {
@@ -45,13 +46,11 @@ export class SongController {
     // 参数标准化：统一转换为 BitrateLevel
     const level = this.normalizeToLevel(br);
 
-    const [url_result, lrc, like_ids] = await Promise.all([
+    const [url_result, like_ids] = await Promise.all([
       song_url_v1({ id, level, ...this.ctx.base_parms }),
-      lyric({ id, ...this.ctx.base_parms }),
       likelist({ uid: -1, ...this.ctx.base_parms })
     ]);
 
-    const lry_result = lrc.body as any;
     const data: Song = {
       id,
       meta: {
@@ -60,11 +59,6 @@ export class SongController {
         size: url_result.body.data[0].size,
         bitrate: url_result.body.data[0].br,
         isFavorite: (like_ids.body.ids as any[]).includes(Number(id)),
-        lyric: {
-          normal: lry_result.lrc?.lyric ?? '',
-          translation: lry_result.tlyric?.lyric ?? '',
-          transliteration: lry_result.romalrc?.lyric ?? ''
-        }
       }
     }
     return data;
@@ -105,14 +99,15 @@ export class SongController {
 
   @Get('/lyric')
   async getLyric(@Query('id') id: id) {
-    const result = await lyric({ id, ...this.ctx.base_parms });
+    const result = await lyric_new({ id, ...this.ctx.base_parms });
     const data = result.body as any;
     return {
       id,
       lyric: {
-        normal: data.lrc?.lyric ?? '',
-        translation: data.tlyric?.lyric ?? '',
-        transliteration: data.romalrc?.lyric ?? ''
+        normal: normalizeNetEaseLyric(data.lrc?.lyric),
+        translation: normalizeNetEaseLyric(data.tlyric?.lyric),
+        transliteration: normalizeNetEaseLyric(data.romalrc?.lyric),
+        yrc: convertNetEaseYrcToEnhancedLrc(data.yrc?.lyric),
       }
     }
   }

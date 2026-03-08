@@ -71,4 +71,6 @@ interface Lyric {
   transliteration?: string;
   // 翻译歌词
   translation?: string;
+  // 逐字歌词
+  yrc?: string;
 }
