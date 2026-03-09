@@ -46,10 +46,13 @@ export class SongController {
     // 参数标准化：统一转换为 BitrateLevel
     const level = this.normalizeToLevel(br);
 
-    const [url_result, like_ids] = await Promise.all([
+    const [url_result, lyric_result, like_ids] = await Promise.all([
       song_url_v1({ id, level, ...this.ctx.base_parms }),
+      lyric_new({ id, ...this.ctx.base_parms }),
       likelist({ uid: -1, ...this.ctx.base_parms })
     ]);
+
+    const lyric = lyric_result.body as any;
 
     const data: Song = {
       id,
@@ -59,6 +62,12 @@ export class SongController {
         size: url_result.body.data[0].size,
         bitrate: url_result.body.data[0].br,
         isFavorite: (like_ids.body.ids as any[]).includes(Number(id)),
+        lyric: {
+          normal: normalizeNetEaseLyric(lyric.lrc?.lyric),
+          translation: normalizeNetEaseLyric(lyric.tlyric?.lyric),
+          transliteration: normalizeNetEaseLyric(lyric.romalrc?.lyric),
+          wordforword: convertNetEaseYrcToEnhancedLrc(lyric.yrc?.lyric),
+        }
       }
     }
     return data;
