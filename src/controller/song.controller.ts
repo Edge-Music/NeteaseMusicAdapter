@@ -107,7 +107,7 @@ export class SongController {
         normal: normalizeNetEaseLyric(data.lrc?.lyric),
         translation: normalizeNetEaseLyric(data.tlyric?.lyric),
         transliteration: normalizeNetEaseLyric(data.romalrc?.lyric),
-        yrc: convertNetEaseYrcToEnhancedLrc(data.yrc?.lyric),
+        wordforword: convertNetEaseYrcToEnhancedLrc(data.yrc?.lyric),
       }
     }
   }
